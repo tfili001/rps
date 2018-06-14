@@ -1,0 +1,5 @@
+#!/bin/bash
+
+gcc -Wall -o /home/tim/Documents/rps/play/play /home/tim/Documents/rps/play/play.c
+gcc -Wall -o /home/tim/Documents/rps/client/client /home/tim/Documents/rps/client/client.c
+gcc -Wall -o /home/tim/Documents/rps/ref/ref /home/tim/Documents/rps/ref/ref.c

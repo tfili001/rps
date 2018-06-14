@@ -1,0 +1,151 @@
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <string.h>
+#include "readstr.h"
+#include <sys/socket.h>
+#include <sys/un.h>
+#include <sys/types.h> 
+
+#define SOCKET_NAME "/tmp/again.socket"
+#define BUFFER_SIZE 12
+
+
+int CreateSocket(){
+
+	int connection_socket = socket(AF_UNIX, SOCK_STREAM, 0);
+           if (connection_socket == -1) {
+               perror("socket");
+               exit(EXIT_FAILURE);
+           }
+
+
+
+	printf("Socket: Created %d \n",connection_socket);
+return connection_socket;
+}
+
+int BindSocket(int fd){
+
+	struct sockaddr_un name;
+	int ret;
+           memset(&name, 0, sizeof(struct sockaddr_un));
+	name.sun_family = AF_UNIX;
+    strncpy(name.sun_path, SOCKET_NAME, sizeof(name.sun_path) - 1);
+    ret = bind(fd, (const struct sockaddr *) &name, sizeof(struct sockaddr_un));
+           if (ret == -1) {
+               perror("bind");
+               exit(EXIT_FAILURE);
+           }
+			
+
+printf("Socket: Binded \n");
+return ret;
+}
+
+int main(){
+           unlink(SOCKET_NAME);
+
+
+struct sockaddr_un name;
+int ret;
+           int down_flag = 0;
+
+int result = 0;
+int fd;
+int data_fd;
+char *str;
+char buffer[BUFFER_SIZE];
+
+printf("Referee \n____________________\n");
+fd = CreateSocket();
+ret = BindSocket(fd);
+   if (ret == -1) {
+               perror("bind");
+               exit(EXIT_FAILURE);
+           }
+
+          ret = listen(fd, 20);
+
+ if (ret < 0)
+    {
+      perror ("listen");
+      exit (EXIT_FAILURE);
+    }
+for(;;){
+
+       data_fd = accept(fd, NULL, NULL);
+
+		if (data_fd < 0){
+							printf("accept \n");
+          perror("ERROR on accept");
+			      exit (EXIT_FAILURE);
+		}
+
+
+                   if (ret == -1) {
+                       perror("read");
+                       exit(EXIT_FAILURE);
+                   }
+
+printf("before\n");
+					result = 0;
+                   for(;;) {
+
+		printf("write: begin\n");
+		ret = write(data_fd, "GO", BUFFER_SIZE);
+				printf("write: finish\n");
+
+                   /* Wait for next data packet. */
+											printf("before read______________________\n");				    
+                   ret = read(data_fd, buffer, BUFFER_SIZE);
+						printf("____after read______________________\n");				    
+                   if (ret == -1) {
+                       perror("read");
+                       exit(EXIT_FAILURE);
+                   }
+
+
+
+                   /* Ensure buffer is 0-terminated. */
+			printf("result: %s \n",buffer);
+                  buffer[BUFFER_SIZE - 1] = 0;
+
+                   /* Handle commands. */
+ if (!strncmp(buffer, "DOWN", BUFFER_SIZE)) {
+                       down_flag = 1;
+                       break;
+                   }
+
+                   if (!strncmp(buffer, "END", BUFFER_SIZE)) {
+                       break;
+                   }
+
+
+                   /* Add received summand. */
+
+                   result += atoi(buffer);
+						printf("__________________________\n");				    
+               }
+		printf("+++++++++++++++++++++++++++++++++++\n");
+		sprintf(buffer, "%d", result);
+
+
+
+}
+	printf("over \n");
+
+
+
+
+close(fd);
+
+           /* Unlink the socket. */
+
+           unlink(SOCKET_NAME);
+
+           exit(EXIT_SUCCESS);
+
+
+return 0;
+}
